@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools" android:orientation="vertical"
+              android:id="@+id/presentation"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <ViewFlipper android:id="@+id/flipper"
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent"
+                 android:layout_gravity="center"
+                 tools:ignore="UselessParent">
+
+        <ImageView android:id="@+id/image_a"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_marginTop="30dp"
+                   android:layout_marginBottom="30dp"
+                   android:paddingTop="10dp"
+                   android:paddingBottom="10dp"
+                   android:paddingLeft="18dp"
+                   android:paddingRight="18dp"
+                   android:layout_gravity="center"
+                   android:adjustViewBounds="true"
+                   android:background="@drawable/pic_frame_light"
+                   android:src="@drawable/testpic"
+                   tools:ignore="ContentDescription"/>
+
+        <ImageView android:id="@+id/image_b"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_marginTop="30dp"
+                   android:layout_marginBottom="30dp"
+                   android:paddingTop="10dp"
+                   android:paddingBottom="10dp"
+                   android:paddingLeft="18dp"
+                   android:paddingRight="18dp"
+                   android:layout_gravity="center"
+                   android:adjustViewBounds="true"
+                   android:background="@drawable/pic_frame_light"
+                   tools:ignore="ContentDescription"/>
+
+
+    </ViewFlipper>
+
+</LinearLayout>
+
