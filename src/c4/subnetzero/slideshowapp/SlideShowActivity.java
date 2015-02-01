@@ -12,6 +12,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -32,6 +33,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    private TextView mIntervalText;
    private Switch mLoopSwitch;
    private SeekBar mIntervalSeek;
+   private ProgressBar mImageProgressBar;
    private ToggleButton mStartStopBtn;
    private ToggleButton mPauseResumeBtn;
    private ToggleButton mShowTestBtn;
@@ -109,10 +111,11 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    {
       switch (msg.what) {
          case AUTOPLAY_SWITCH_VIEW:
+            int nextImageNumber = mNextImageNumber == 0 ? mNumberOfImages : mNextImageNumber;
             String nextImage = mGalleryDirPath + "/" + mImageFileNames[mNextImageNumber];
             mSlideShowPresentation.switchView(nextImage);
-            mImageText.setText(String.format("%d/%d",
-                  mNextImageNumber == 0 ? mNumberOfImages : mNextImageNumber,mNumberOfImages));
+            mImageProgressBar.setProgress(nextImageNumber);
+            mImageText.setText(String.format(getString(R.string.img_progress), nextImageNumber, mNumberOfImages));
             if (!mDone) {
                mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, mIntervalSec * 1000);
             } else {
@@ -148,8 +151,10 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mDone = false;
       mNextImageNumber = 2;
       mIsPlaying = true;
-      mImageText.setText(String.format("%d/%d",1,mNumberOfImages));
+      mImageProgressBar.setProgress(1);
+      mImageText.setText(String.format(getString(R.string.img_progress), 1, mNumberOfImages));
       mImageText.setVisibility(View.VISIBLE);
+      mImageProgressBar.setVisibility(View.VISIBLE);
    }
 
    public void resumeAutoPlay()
@@ -181,6 +186,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mIsPlaying = false;
       mUiHandler.removeCallbacksAndMessages(null);
       mImageText.setVisibility(View.INVISIBLE);
+      mImageProgressBar.setVisibility(View.INVISIBLE);
       mSlideShowPresentation.stopAutoPlay();
       mPauseResumeBtn.setChecked(false);
       mPauseResumeBtn.setEnabled(false);
@@ -207,9 +213,10 @@ public class SlideShowActivity extends Activity implements Handler.Callback
          presentationDisplay = displays[0];
       }
 
+      mImageProgressBar = (ProgressBar) findViewById(R.id.img_progress_bar);
       mIntervalText = (TextView)findViewById(R.id.interval_value);
 
-      mImageText = (TextView)findViewById(R.id.image_text);
+      mImageText = (TextView) findViewById(R.id.img_progress_label);
       mLoopSwitch = (Switch)findViewById(R.id.loop_switch);
       mLoopSwitch.setOnClickListener(mOnClickListener);
 
@@ -234,7 +241,6 @@ public class SlideShowActivity extends Activity implements Handler.Callback
          @Override
          public void onStartTrackingTouch(SeekBar seekBar)
          {
-
          }
 
          @Override
@@ -272,11 +278,10 @@ public class SlideShowActivity extends Activity implements Handler.Callback
 
    public void setGallery(final String galleryDir, final String[] imageNames)
    {
-      Log.d(LOG_TAG, "setGallery()");
-
       mGalleryDirPath = galleryDir;
       mImageFileNames = imageNames;
       mNumberOfImages = mImageFileNames.length;
+      mImageProgressBar.setMax(mNumberOfImages);
    }
 
    private String[] getImageFileNames(final String galleryDir)

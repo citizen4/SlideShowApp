@@ -5,26 +5,32 @@
               android:layout_height="match_parent"
 
         >
-    <LinearLayout android:layout_width="match_parent"
+    <RelativeLayout android:layout_width="match_parent"
                   android:layout_height="0dp"
                   android:layout_weight="1"
+                  android:padding="10dp"
                   android:gravity="center"
-                  android:orientation="horizontal"
             >
 
-     <TextView android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:textSize="40sp"
-              android:text="Showing image: "
-            />
-    <TextView android:id="@+id/image_text"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:textSize="40sp"
-              android:text=""
+        <TextView android:id="@+id/img_progress_label"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_centerHorizontal="true"
+                  android:textSize="30sp"
+                  android:text="Showing image: "
             />
 
-    </LinearLayout>
+        <ProgressBar style="@style/ImageProgressBar"
+                     android:id="@+id/img_progress_bar"
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+                     android:layout_marginRight="20dp"
+                     android:layout_marginLeft="20dp"
+                     android:layout_marginTop="5dp"
+                     android:layout_below="@id/img_progress_label"
+                />
+
+    </RelativeLayout>
 
     <LinearLayout android:layout_width="match_parent"
                   android:layout_height="0dp"

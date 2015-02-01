@@ -18,16 +18,16 @@ public class SlideShowPresentation extends Presentation
 {
    private static final String LOG_TAG = "SlideShowPresentation";
    private static final int MAX_IMAGE_SIZE = 1600;
-
+   private static final int NUM_OF_ANIMATIONS = 6;
    private Handler mUiHandler;
    private ViewFlipper mFlipper;
    private ImageView mImageViewA;
    private ImageView mImageViewB;
-   private Bitmap mImageBitmapA;
-   private Bitmap mImageBitmapB;
+   //private Bitmap mImageBitmapA;
+   //private Bitmap mImageBitmapB;
    private int[][] mAnimations;
    private String mNextImageFile;
-   private volatile boolean mFirstImage;
+   //private volatile boolean mFirstImage;
    private int mCounter;
 
 
@@ -114,14 +114,20 @@ public class SlideShowPresentation extends Presentation
 
       mFlipper = (ViewFlipper) findViewById(R.id.flipper);
 
-      mAnimations = new int[3][2];
+      mAnimations = new int[NUM_OF_ANIMATIONS][2];
 
       mAnimations[0][0] = R.anim.slide_in_left;
       mAnimations[0][1] = R.anim.slide_out_right;
-      mAnimations[1][0] = R.anim.grow_fade_in;
-      mAnimations[1][1] = R.anim.shrink_fade_out;
+      mAnimations[1][0] = R.anim.flipp_in_v;
+      mAnimations[1][1] = R.anim.flipp_out_v;
       mAnimations[2][0] = R.anim.slide_in_top;
       mAnimations[2][1] = R.anim.slide_out_bottom;
+      mAnimations[3][0] = R.anim.slide_in_right;
+      mAnimations[3][1] = R.anim.slide_out_left;
+      mAnimations[4][0] = R.anim.flipp_in_h;
+      mAnimations[4][1] = R.anim.flipp_out_h;
+      mAnimations[5][0] = R.anim.grow_fade_in;
+      mAnimations[5][1] = R.anim.shrink_fade_out;
 
       //mImageBitmapA = Bitmap.createBitmap(2048, 2048, Bitmap.Config.ARGB_8888);
       //mImageBitmapB = Bitmap.createBitmap(2048, 2048, Bitmap.Config.ARGB_8888);
@@ -193,8 +199,8 @@ public class SlideShowPresentation extends Presentation
          @Override
          public void run()
          {
-            Bitmap inBitmap = (imageView == mImageViewA) ? mImageBitmapA : mImageBitmapB;
-            final Bitmap imgBitmap = getBitmap(inBitmap,imagePath, MAX_IMAGE_SIZE, MAX_IMAGE_SIZE);
+            //Bitmap inBitmap = (imageView == mImageViewA) ? mImageBitmapA : mImageBitmapB;
+            final Bitmap imgBitmap = getBitmap(null/*inBitmap*/, imagePath, MAX_IMAGE_SIZE, MAX_IMAGE_SIZE);
             mUiHandler.post(new Runnable()
             {
                @Override
@@ -269,8 +275,8 @@ public class SlideShowPresentation extends Presentation
       public void onAnimationEnd(Animation animation)
       {
          setBackImage(mNextImageFile);
-         mFlipper.setInAnimation(getContext(), mAnimations[mCounter % 3][0]);
-         mFlipper.setOutAnimation(getContext(), mAnimations[mCounter % 3][1]);
+         mFlipper.setInAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][0]);
+         mFlipper.setOutAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][1]);
          mFlipper.getInAnimation().setAnimationListener(mAnimationListener);
          mCounter++;
       }
