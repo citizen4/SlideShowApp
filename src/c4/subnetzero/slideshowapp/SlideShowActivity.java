@@ -16,11 +16,11 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.Arrays;
 
 
 public class SlideShowActivity extends Activity implements Handler.Callback
@@ -39,15 +39,13 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    private ToggleButton mShowTestBtn;
    private String mGalleryDirPath;
    private String[] mImageFileNames;
-   private volatile boolean mIsBtEnabled;
+   //private volatile boolean mIsBtEnabled;
    private volatile boolean mIsPlaying;
    private volatile boolean mLoop;
    private volatile boolean mDone;
    private int mNumberOfImages;
-   private int mNextImageNumber;
-   private int mIntervalSec = 3;
-   private int mCurrentInterval;
-   private int mMode;
+   private int mNextImageIndex;
+   private int mInterval = 3;
 
 
    public static final int AUTOPLAY_SWITCH_VIEW = 0;
@@ -143,24 +141,23 @@ public class SlideShowActivity extends Activity implements Handler.Callback
 
       switch (msg.what) {
          case AUTOPLAY_SWITCH_VIEW:
-            uiUpdateMsg = new RcMessage();
-            int nextImageNumber = mNextImageNumber == 0 ? mNumberOfImages : mNextImageNumber;
-            String nextImage = mGalleryDirPath + "/" + mImageFileNames[mNextImageNumber];
-            mSlideShowPresentation.switchView(nextImage);
+            int nextImageNumber = mNextImageIndex == 0 ? mNumberOfImages : mNextImageIndex;
+            mSlideShowPresentation.switchView(mGalleryDirPath + "/" + mImageFileNames[mNextImageIndex]);
             mImageProgressBar.setProgress(nextImageNumber);
+            uiUpdateMsg = new RcMessage();
             uiUpdateMsg.TYPE = RcMessage.UI_UPDATE;
-            uiUpdateMsg.UI_STATE = new int[]{RcMessage.IMAGE_PROGRESS, nextImageNumber};
+            uiUpdateMsg.UI_STATE = new int[]{RcMessage.IMAGE_PROGRESS, nextImageNumber, View.VISIBLE};
             mBtRcManager.sendMessage(uiUpdateMsg);
             mImageText.setText(String.format(getString(R.string.img_progress), nextImageNumber, mNumberOfImages));
 
             if (!mDone) {
-               mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, mIntervalSec * 1000);
+               mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, getInterval(mImageFileNames[nextImageNumber - 1]));
             } else {
                mPauseResumeBtn.performClick();
             }
 
-            mDone = !mLoop && (mNextImageNumber == mNumberOfImages - 1);
-            mNextImageNumber = (mNextImageNumber + 1) % mNumberOfImages;
+            mDone = !mLoop && (mNextImageIndex == mNumberOfImages - 1);
+            mNextImageIndex = (mNextImageIndex + 1) % mNumberOfImages;
             break;
          case BtRcManager.STATE_CHANGED:
             Log.d(LOG_TAG, "State changed to: " + msg.obj.toString());
@@ -177,7 +174,6 @@ public class SlideShowActivity extends Activity implements Handler.Callback
             RcMessage rcMsg = (RcMessage) msg.obj;
             if (rcMsg.TYPE == RcMessage.COMMAND) {
                execCommand(rcMsg);
-               break;
             }
             break;
          default:
@@ -199,13 +195,12 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mSlideShowPresentation.resetPresentation(mGalleryDirPath + "/" + mImageFileNames[0],
               mGalleryDirPath + "/" + mImageFileNames[1]);
       //mFlipper.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-      Toast.makeText(this, "Auto play started! ", Toast.LENGTH_SHORT).show();
-      mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, mIntervalSec * 2000);
+      mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, getInterval(mImageFileNames[0]));
       mPauseResumeBtn.setEnabled(true);
       mShowTestBtn.setChecked(false);
       mShowTestBtn.setEnabled(false);
       mDone = false;
-      mNextImageNumber = 2;
+      mNextImageIndex = 2;
       mIsPlaying = true;
       mImageProgressBar.setProgress(1);
       mImageText.setText(String.format(getString(R.string.img_progress), 1, mNumberOfImages));
@@ -219,7 +214,6 @@ public class SlideShowActivity extends Activity implements Handler.Callback
          return;
       }
 
-      Toast.makeText(this, "Auto play resumed! ", Toast.LENGTH_SHORT).show();
       mUiHandler.sendEmptyMessage(AUTOPLAY_SWITCH_VIEW);
       mIsPlaying = true;
    }
@@ -231,7 +225,6 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       }
 
       mUiHandler.removeCallbacksAndMessages(null);
-      Toast.makeText(this, "Auto play paused! ", Toast.LENGTH_SHORT).show();
       mIsPlaying = false;
    }
 
@@ -288,7 +281,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mIntervalSeek = (SeekBar) findViewById(R.id.interval_seek);
       mIntervalSeek.setOnSeekBarChangeListener(mSeekBarListener);
 
-      mIntervalSeek.setProgress(mIntervalSec);
+      mIntervalSeek.setProgress(mInterval);
       mSlideShowPresentation = new SlideShowPresentation(this, presentationDisplay, 0);
 
       if (startIntent.getDataString() != null) {
@@ -336,6 +329,8 @@ public class SlideShowActivity extends Activity implements Handler.Callback
          }
       });
 
+      Arrays.sort(imageNames);
+
       return imageNames;
    }
 
@@ -366,20 +361,39 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    {
       return new int[]{
               RcMessage.START_BTN,
-              mStartStopBtn.isEnabled() ? RcMessage.ENABLED : RcMessage.DISABLED,
+              mStartStopBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
               mStartStopBtn.isChecked() ? RcMessage.ON : RcMessage.OFF,
               RcMessage.PAUSE_BTN,
-              mPauseResumeBtn.isEnabled() ? RcMessage.ENABLED : RcMessage.DISABLED,
+              mPauseResumeBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
               mPauseResumeBtn.isChecked() ? RcMessage.ON : RcMessage.OFF,
               RcMessage.TEST_BTN,
-              mShowTestBtn.isEnabled() ? RcMessage.ENABLED : RcMessage.DISABLED,
+              mShowTestBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
               mShowTestBtn.isChecked() ? RcMessage.ON : RcMessage.OFF,
               RcMessage.LOOP_SWITCH,
               mLoopSwitch.isChecked() ? RcMessage.ON : RcMessage.OFF,
               RcMessage.INTERVAL_SEEK, mIntervalSeek.getProgress(),
               RcMessage.IMAGE_NUMBER, mImageProgressBar.getMax(),
-              RcMessage.IMAGE_PROGRESS, mImageProgressBar.getProgress()
+              RcMessage.IMAGE_PROGRESS, mImageProgressBar.getProgress(),
+              mImageProgressBar.getVisibility()
       };
+   }
+
+   private int getInterval(final String fileName)
+   {
+      int f = 1;
+      // 134%12.jpg
+      if (fileName.contains("%")) {
+         f = 2;
+         int i1 = fileName.lastIndexOf('%');
+         int i2 = fileName.lastIndexOf('.');
+         try {
+            f = Integer.parseInt(fileName.substring(i1 + 1, i2));
+         } catch (Exception e) {
+            /* IGNORED */
+         }
+      }
+
+      return 1000 * f * mInterval;
    }
 
 
@@ -449,8 +463,8 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       @Override
       public void onStopTrackingTouch(SeekBar seekBar)
       {
-         mIntervalSec = seekBar.getProgress() + 2;
-         mIntervalText.setText(mIntervalSec + " sec.");
+         mInterval = seekBar.getProgress() + 2;
+         mIntervalText.setText(mInterval + " sec.");
       }
    };
 }

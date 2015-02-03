@@ -19,18 +19,15 @@ public class RcMessage
    //UI States
    public static final int OFF = 0;
    public static final int ON = 1;
-   public static final int ENABLED = 2;
-   public static final int DISABLED = 3;
+   //public static final int ENABLED = 2;
+   //public static final int DISABLED = 3;
 
    //Message
    public int TYPE = COMMAND;
    public int ELEMENT = NOP;
    public int ARG1 = OFF;
    public int ARG2 = OFF;
-   //public int ELEMENT_ARG3 = OFF;
 
-   public boolean ACK_FLAG = false;
-   public boolean RST_FLAG = false;
    public int[] UI_STATE = null;
-   public long SEQ = 0L;
+
 }

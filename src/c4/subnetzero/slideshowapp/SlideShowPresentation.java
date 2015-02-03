@@ -64,6 +64,7 @@ public class SlideShowPresentation extends Presentation
    {
       setFrontImage(frontImage);
       setBackImage(backImage);
+      //mFlipper.setDisplayedChild(0);
       mFlipper.setInAnimation(getContext(), mAnimations[0][0]);
       mFlipper.setOutAnimation(getContext(), mAnimations[0][1]);
       mFlipper.getInAnimation().setAnimationListener(mAnimationListener);

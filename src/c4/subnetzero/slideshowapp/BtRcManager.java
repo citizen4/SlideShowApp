@@ -81,7 +81,7 @@ public class BtRcManager
    public void sendMessage(final RcMessage message)
    {
       final Gson gson = new Gson();
-      Log.d(LOG_TAG, "TX: " + gson.toJson(message));
+      //Log.d(LOG_TAG, "TX: " + gson.toJson(message));
       sendString(gson.toJson(message));
    }
 
@@ -283,12 +283,11 @@ public class BtRcManager
 
          try {
             msgStr = msgStr.trim();
-            Log.d(LOG_TAG, "RX: " + msgStr);
+            //Log.d(LOG_TAG, "RX: " + msgStr);
             RcMessage newMsg = gson.fromJson(msgStr, RcMessage.class);
             mUiHandler.obtainMessage(MESSAGE_RECEIVED, 0, 0, newMsg).sendToTarget();
          } catch (JsonSyntaxException e) {
             mUiHandler.obtainMessage(STRING_RECEIVED, 0, 0, msgStr).sendToTarget();
-            //Log.e(LOG_TAG, "", e);
          }
       }
 
