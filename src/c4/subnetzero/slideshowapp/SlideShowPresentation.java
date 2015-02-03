@@ -29,7 +29,7 @@ public class SlideShowPresentation extends Presentation
    private String mNextImageFile;
    //private volatile boolean mFirstImage;
    private int mCounter;
-
+   private float mWidthScaleFactor = 1.0f;
 
    public SlideShowPresentation(Context outerContext, Display display, int theme)
    {
@@ -226,7 +226,7 @@ public class SlideShowPresentation extends Presentation
       options.inJustDecodeBounds = true;
       BitmapFactory.decodeFile(path, options);
 
-      Log.d(LOG_TAG,"Img. Size: "+options.outWidth+"x"+options.outHeight);
+      //Log.d(LOG_TAG,"Img. Size: "+options.outWidth+"x"+options.outHeight);
 
       // Calculate inSampleSize
       options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
@@ -236,7 +236,10 @@ public class SlideShowPresentation extends Presentation
 
       //options.inBitmap = imageBitmap;
 
-      return BitmapFactory.decodeFile(path, options);
+      Bitmap outBitmap = BitmapFactory.decodeFile(path, options);
+      int outWidth = (int) (mWidthScaleFactor * options.outWidth);
+
+      return Bitmap.createScaledBitmap(outBitmap, outWidth, options.outHeight, true);
    }
 
 
