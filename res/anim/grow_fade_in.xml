@@ -13,7 +13,7 @@
            android:duration="600"/>
 
     <alpha android:interpolator="@android:interpolator/linear"
-           android:fromAlpha="0.2"
+           android:fromAlpha="0.0"
            android:toAlpha="1.0"
            android:duration="500"/>
 </set>

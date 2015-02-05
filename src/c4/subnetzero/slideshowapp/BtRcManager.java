@@ -24,9 +24,9 @@ public class BtRcManager
 {
    public static final int REQUEST_ENABLE_BT = 1;
    public static final int REQUEST_DISCOVERABLE_BT = 2;
-   public static final int STATE_CHANGED = 1;
-   public static final int MESSAGE_RECEIVED = 2;
-   public static final int STRING_RECEIVED = 3;
+   public static final int STATE_CHANGED = 101;
+   public static final int MESSAGE_RECEIVED = 102;
+   public static final int STRING_RECEIVED = 103;
 
    private static final String LOG_TAG = "BtRcManager";
    private static final String UUID_STRING = "069c9397-7da9-4810-849c-f52f6b1deaf";

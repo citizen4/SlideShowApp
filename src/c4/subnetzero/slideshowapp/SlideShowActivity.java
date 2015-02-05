@@ -43,12 +43,15 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    private volatile boolean mIsPlaying;
    private volatile boolean mLoop;
    private volatile boolean mDone;
+   private volatile boolean mBusy;
+   private volatile boolean mAutoPlay;
    private int mNumberOfImages;
    private int mNextImageIndex;
    private int mInterval = 3;
 
 
    public static final int AUTOPLAY_SWITCH_VIEW = 0;
+   public static final int TRANSISION_FINISHED = 1;
 
 
    @Override
@@ -141,26 +144,18 @@ public class SlideShowActivity extends Activity implements Handler.Callback
 
       switch (msg.what) {
          case AUTOPLAY_SWITCH_VIEW:
-            int nextImageNumber = mNextImageIndex == 0 ? mNumberOfImages : mNextImageIndex;
-            mSlideShowPresentation.switchView(mGalleryDirPath + "/" + mImageFileNames[mNextImageIndex]);
-            mImageProgressBar.setProgress(nextImageNumber);
-            uiUpdateMsg = new RcMessage();
-            uiUpdateMsg.TYPE = RcMessage.UI_UPDATE;
-            uiUpdateMsg.UI_STATE = new int[]{RcMessage.IMAGE_PROGRESS, nextImageNumber, View.VISIBLE};
-            mBtRcManager.sendMessage(uiUpdateMsg);
-            mImageText.setText(String.format(getString(R.string.img_progress), nextImageNumber, mNumberOfImages));
-
-            if (!mDone) {
-               mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, getInterval(mImageFileNames[nextImageNumber - 1]));
+            if (mLoop || (mNextImageIndex < mNumberOfImages - 1)) {
+               mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, getInterval(mImageFileNames[mNextImageIndex]));
             } else {
                mPauseResumeBtn.performClick();
             }
-
-            mDone = !mLoop && (mNextImageIndex == mNumberOfImages - 1);
-            mNextImageIndex = (mNextImageIndex + 1) % mNumberOfImages;
+            showNextImage();
+            incrementImageIndex();
+            break;
+         case TRANSISION_FINISHED:
+            mBusy = false;
             break;
          case BtRcManager.STATE_CHANGED:
-            Log.d(LOG_TAG, "State changed to: " + msg.obj.toString());
 
             if (mBtRcManager.getState() == BtRcManager.State.CONNECTED) {
                uiUpdateMsg = new RcMessage();
@@ -191,6 +186,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       }
 
       Log.d(LOG_TAG, "Start auto play");
+      mAutoPlay = true;
       mUiHandler.removeCallbacksAndMessages(null);
       mSlideShowPresentation.resetPresentation(mGalleryDirPath + "/" + mImageFileNames[0],
               mGalleryDirPath + "/" + mImageFileNames[1]);
@@ -200,7 +196,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mShowTestBtn.setChecked(false);
       mShowTestBtn.setEnabled(false);
       mDone = false;
-      mNextImageIndex = 2;
+      mNextImageIndex = 1;
       mIsPlaying = true;
       mImageProgressBar.setProgress(1);
       mImageText.setText(String.format(getString(R.string.img_progress), 1, mNumberOfImages));
@@ -233,6 +229,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    {
       Log.d(LOG_TAG, "Stop auto play");
       mIsPlaying = false;
+      mAutoPlay = false;
       mUiHandler.removeCallbacksAndMessages(null);
       mImageText.setVisibility(View.INVISIBLE);
       mImageProgressBar.setVisibility(View.INVISIBLE);
@@ -242,6 +239,22 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mShowTestBtn.setEnabled(true);
    }
 
+   public void showNextImage()
+   {
+      if (mBusy) {
+         return;
+      }
+
+      RcMessage uiUpdateMsg;
+      mBusy = true;
+      mSlideShowPresentation.switchView(mGalleryDirPath + "/" + mImageFileNames[mNextImageIndex]);
+      mImageProgressBar.setProgress(mNextImageIndex + 1);
+      uiUpdateMsg = new RcMessage();
+      uiUpdateMsg.TYPE = RcMessage.UI_UPDATE;
+      uiUpdateMsg.UI_STATE = new int[]{RcMessage.IMAGE_PROGRESS, mNextImageIndex + 1, View.VISIBLE};
+      mBtRcManager.sendMessage(uiUpdateMsg);
+      mImageText.setText(String.format(getString(R.string.img_progress), mNextImageIndex + 1, mNumberOfImages));
+   }
 
    private void setup()
    {
@@ -282,13 +295,14 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mIntervalSeek.setOnSeekBarChangeListener(mSeekBarListener);
 
       mIntervalSeek.setProgress(mInterval);
-      mSlideShowPresentation = new SlideShowPresentation(this, presentationDisplay, 0);
+      mSlideShowPresentation = new SlideShowPresentation(this, presentationDisplay, mUiHandler);
 
       if (startIntent.getDataString() != null) {
          File imgFile = new File(startIntent.getData().getPath());
          galleryDir = imgFile.getParent();
       } else {
          galleryDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath();
+         galleryDir += "/BDayTest";
       }
 
       imageFileNames = getImageFileNames(galleryDir);
@@ -396,6 +410,16 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       return 1000 * f * mInterval;
    }
 
+
+   private synchronized void incrementImageIndex()
+   {
+      mNextImageIndex = (mNextImageIndex + 1) % mNumberOfImages;
+   }
+
+   private synchronized void decrementImageIndex()
+   {
+      mNextImageIndex = (mNextImageIndex == 0) ? mNumberOfImages - 1 : mNextImageIndex - 1;
+   }
 
    private View.OnClickListener mOnClickListener = new View.OnClickListener()
    {

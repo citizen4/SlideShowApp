@@ -20,6 +20,7 @@ public class SlideShowPresentation extends Presentation
    private static final int MAX_IMAGE_SIZE = 1600;
    private static final int NUM_OF_ANIMATIONS = 6;
    private Handler mUiHandler;
+   private Handler mActivityHandler;
    private ViewFlipper mFlipper;
    private ImageView mImageViewA;
    private ImageView mImageViewB;
@@ -27,13 +28,14 @@ public class SlideShowPresentation extends Presentation
    //private Bitmap mImageBitmapB;
    private int[][] mAnimations;
    private String mNextImageFile;
-   //private volatile boolean mFirstImage;
+   private volatile boolean mShowNextImage;
    private int mCounter;
    private float mWidthScaleFactor = 1.0f;
 
-   public SlideShowPresentation(Context outerContext, Display display, int theme)
+   public SlideShowPresentation(Context outerContext, Display display, Handler activityHandler)
    {
-      super(outerContext, display, theme);
+      super(outerContext, display);
+      mActivityHandler = activityHandler;
    }
 
    @Override
@@ -102,8 +104,9 @@ public class SlideShowPresentation extends Presentation
 
    public void switchView(final String nextImageFile)
    {
-      mNextImageFile = nextImageFile;
-      mFlipper.showNext();
+      mShowNextImage = true;
+      setNextImage(nextImageFile);
+      //mFlipper.showNext();
    }
 
    private void setup()
@@ -133,27 +136,16 @@ public class SlideShowPresentation extends Presentation
       //mImageBitmapA = Bitmap.createBitmap(2048, 2048, Bitmap.Config.ARGB_8888);
       //mImageBitmapB = Bitmap.createBitmap(2048, 2048, Bitmap.Config.ARGB_8888);
 
-      /*
-      mFlipper.setInAnimation(getContext(), mAnimations[0][0]);
-      mFlipper.setOutAnimation(getContext(), mAnimations[0][1]);
+   }
 
-      findViewById(R.id.presentation).setOnClickListener(new View.OnClickListener()
-      {
-         @Override
-         public void onClick(View v)
-         {
-            if (mNumberOfImages == 0) {
-               return;
-            }
 
-            if (mIsPlaying) {
-               stopAutoPlay();
-            } else {
-               startAutoPlay();
-            }
-         }
-      });*/
-
+   public void setNextImage(final String nextImage)
+   {
+      setBackImage(nextImage == null ? mNextImageFile : nextImage);
+      mFlipper.setInAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][0]);
+      mFlipper.setOutAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][1]);
+      mFlipper.getInAnimation().setAnimationListener(mAnimationListener);
+      mCounter++;
    }
 
 
@@ -200,6 +192,7 @@ public class SlideShowPresentation extends Presentation
          @Override
          public void run()
          {
+            final long ts = System.currentTimeMillis();
             //Bitmap inBitmap = (imageView == mImageViewA) ? mImageBitmapA : mImageBitmapB;
             final Bitmap imgBitmap = getBitmap(null/*inBitmap*/, imagePath, MAX_IMAGE_SIZE, MAX_IMAGE_SIZE);
             mUiHandler.post(new Runnable()
@@ -208,17 +201,18 @@ public class SlideShowPresentation extends Presentation
                public void run()
                {
                   imageView.setImageBitmap(imgBitmap);
+                  if (mShowNextImage) {
+                     mFlipper.showNext();
+                     mShowNextImage = false;
+                  }
+                  long ts2 = System.currentTimeMillis();
+                  Log.d(LOG_TAG, "ts diff: " + (ts2 - ts) + "ms");
+                  //mActivityHandler.sendEmptyMessage(SlideShowActivity.SET_IMAGE_DONE);
                }
             });
          }
       }).start();
    }
-
-   /*
-   private void loadAndSetImage(final ImageView imageView, final String imagePath)
-   {
-      imageView.setImageBitmap(getBitmap(imagePath, MAX_IMAGE_SIZE, MAX_IMAGE_SIZE));
-   }*/
 
 
    private Bitmap getBitmap(Bitmap imageBitmap,String path, int reqWidth, int reqHeight)
@@ -278,11 +272,7 @@ public class SlideShowPresentation extends Presentation
       @Override
       public void onAnimationEnd(Animation animation)
       {
-         setBackImage(mNextImageFile);
-         mFlipper.setInAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][0]);
-         mFlipper.setOutAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][1]);
-         mFlipper.getInAnimation().setAnimationListener(mAnimationListener);
-         mCounter++;
+         mActivityHandler.sendEmptyMessage(SlideShowActivity.TRANSISION_FINISHED);
       }
    };
 
