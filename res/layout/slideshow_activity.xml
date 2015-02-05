@@ -66,7 +66,6 @@
                      android:layout_below="@id/interval_label"
                      android:layout_width="680dp"
                      android:layout_height="wrap_content"
-                     android:background="#222"
                      android:max="28"
 
                     />
@@ -81,48 +80,78 @@
                 >
 
             <ToggleButton android:id="@+id/start_stop_tgl"
-                          android:layout_width="220dp"
+                          android:layout_width="160dp"
                           android:layout_height="wrap_content"
                           android:layout_margin="5dp"
                           android:paddingTop="20dp"
                           android:paddingBottom="20dp"
-                          android:textSize="40sp"
+                          android:textSize="36sp"
                           android:textOff="Start"
                           android:textOn="Stop"
                     />
 
             <ToggleButton android:id="@+id/pause_resume_tgl"
-                          android:layout_width="220dp"
+                          android:layout_width="160dp"
                           android:layout_height="wrap_content"
                           android:layout_margin="5dp"
                           android:paddingTop="20dp"
                           android:paddingBottom="20dp"
-                          android:textSize="40sp"
+                          android:textSize="36sp"
                           android:textOff="Pause"
                           android:textOn="Resume"
                           android:enabled="false"
                     />
 
             <ToggleButton android:id="@+id/show_test_tgl"
-                          android:layout_width="220dp"
+                          android:layout_width="160dp"
                           android:layout_height="wrap_content"
                           android:layout_margin="5dp"
                           android:paddingTop="20dp"
                           android:paddingBottom="20dp"
-                          android:textSize="40sp"
+                          android:textSize="36sp"
                           android:checked="true"
-                          android:textOff="Show Test"
-                          android:textOn="Hide Test"
+                          android:textOff="Test"
+                          android:textOn="Test"
                           android:enabled="true"
                     />
 
+
+            <Button android:id="@+id/previous_image_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="50sp"
+                    android:text="&lt;"
+                    />
+
+            <Button android:id="@+id/next_image_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="50sp"
+                    android:text="&gt;"
+                    />
+
         </LinearLayout>
+        <LinearLayout android:layout_width="fill_parent"
+                      android:layout_height="wrap_content"
+                      android:gravity="center"
+                >
         <Switch android:id="@+id/loop_switch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:padding="8dp"
                 android:layout_marginTop="10dp"
-                android:textSize="30sp"
+                android:layout_marginRight="10dp"
+                android:textSize="20sp"
                 android:text="Loop:"
                 />
+            <Switch android:id="@+id/auto_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:layout_marginTop="10dp"
+                    android:textSize="20sp"
+                    android:text="Auto Play:"
+                    />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

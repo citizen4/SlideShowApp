@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
@@ -32,11 +33,14 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    private TextView mImageText;
    private TextView mIntervalText;
    private Switch mLoopSwitch;
+   private Switch mAutoSwitch;
    private SeekBar mIntervalSeek;
    private ProgressBar mImageProgressBar;
    private ToggleButton mStartStopBtn;
    private ToggleButton mPauseResumeBtn;
    private ToggleButton mShowTestBtn;
+   private Button mPreviousImageBtn;
+   private Button mNextImageBtn;
    private String mGalleryDirPath;
    private String[] mImageFileNames;
    //private volatile boolean mIsBtEnabled;
@@ -72,6 +76,9 @@ public class SlideShowActivity extends Activity implements Handler.Callback
 
       if (mSlideShowPresentation != null) {
          mSlideShowPresentation.show();
+         reset();
+         mSlideShowPresentation.showTest(true);
+         mShowTestBtn.setChecked(true);
       }
 
       if (mBtRcManager != null && mBtRcManager.isBtEnabled()) {
@@ -144,13 +151,13 @@ public class SlideShowActivity extends Activity implements Handler.Callback
 
       switch (msg.what) {
          case AUTOPLAY_SWITCH_VIEW:
-            if (mLoop || (mNextImageIndex < mNumberOfImages - 1)) {
+            incrementImageIndex();
+            if (mLoop || (mNextImageIndex + 1 < mNumberOfImages)) {
                mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, getInterval(mImageFileNames[mNextImageIndex]));
             } else {
                mPauseResumeBtn.performClick();
             }
             showNextImage();
-            incrementImageIndex();
             break;
          case TRANSISION_FINISHED:
             mBusy = false;
@@ -179,6 +186,17 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    }
 
 
+   public void reset()
+   {
+      mUiHandler.removeCallbacksAndMessages(null);
+      mImageProgressBar.setProgress(1);
+      mImageText.setText(String.format(getString(R.string.img_progress), 1, mNumberOfImages));
+      mSlideShowPresentation.resetPresentation(mGalleryDirPath + "/" + mImageFileNames[0]);
+      mShowTestBtn.setEnabled(true);
+      mNextImageIndex = 0;
+   }
+
+
    public void startAutoPlay()
    {
       if (mIsPlaying) {
@@ -187,21 +205,13 @@ public class SlideShowActivity extends Activity implements Handler.Callback
 
       Log.d(LOG_TAG, "Start auto play");
       mAutoPlay = true;
-      mUiHandler.removeCallbacksAndMessages(null);
-      mSlideShowPresentation.resetPresentation(mGalleryDirPath + "/" + mImageFileNames[0],
-              mGalleryDirPath + "/" + mImageFileNames[1]);
-      //mFlipper.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+      reset();
       mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, getInterval(mImageFileNames[0]));
       mPauseResumeBtn.setEnabled(true);
       mShowTestBtn.setChecked(false);
       mShowTestBtn.setEnabled(false);
       mDone = false;
-      mNextImageIndex = 1;
       mIsPlaying = true;
-      mImageProgressBar.setProgress(1);
-      mImageText.setText(String.format(getString(R.string.img_progress), 1, mNumberOfImages));
-      mImageText.setVisibility(View.VISIBLE);
-      mImageProgressBar.setVisibility(View.VISIBLE);
    }
 
    public void resumeAutoPlay()
@@ -231,8 +241,8 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mIsPlaying = false;
       mAutoPlay = false;
       mUiHandler.removeCallbacksAndMessages(null);
-      mImageText.setVisibility(View.INVISIBLE);
-      mImageProgressBar.setVisibility(View.INVISIBLE);
+      //mImageText.setVisibility(View.INVISIBLE);
+      //mImageProgressBar.setVisibility(View.INVISIBLE);
       mSlideShowPresentation.stopAutoPlay();
       mPauseResumeBtn.setChecked(false);
       mPauseResumeBtn.setEnabled(false);
@@ -282,6 +292,9 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mLoopSwitch = (Switch) findViewById(R.id.loop_switch);
       mLoopSwitch.setOnClickListener(mOnClickListener);
 
+      mAutoSwitch = (Switch) findViewById(R.id.auto_switch);
+      mAutoSwitch.setOnClickListener(mOnClickListener);
+
       mStartStopBtn = (ToggleButton) findViewById(R.id.start_stop_tgl);
       mStartStopBtn.setOnClickListener(mOnClickListener);
 
@@ -290,6 +303,12 @@ public class SlideShowActivity extends Activity implements Handler.Callback
 
       mShowTestBtn = (ToggleButton) findViewById(R.id.show_test_tgl);
       mShowTestBtn.setOnClickListener(mOnClickListener);
+
+      mPreviousImageBtn = (Button) findViewById(R.id.previous_image_btn);
+      mPreviousImageBtn.setOnClickListener(mOnClickListener);
+
+      mNextImageBtn = (Button) findViewById(R.id.next_image_btn);
+      mNextImageBtn.setOnClickListener(mOnClickListener);
 
       mIntervalSeek = (SeekBar) findViewById(R.id.interval_seek);
       mIntervalSeek.setOnSeekBarChangeListener(mSeekBarListener);
@@ -424,48 +443,56 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    private View.OnClickListener mOnClickListener = new View.OnClickListener()
    {
       @Override
-      public void onClick(View v)
+      public void onClick(View view)
       {
-         if (v instanceof CompoundButton) {
+         boolean isChecked = false;
+
+         if (view instanceof CompoundButton) {
+            isChecked = ((CompoundButton) view).isChecked();
+         }
+
+         switch (view.getId()) {
+            case R.id.start_stop_tgl:
+               if (isChecked) {
+                  startAutoPlay();
+               } else {
+                  stopAutoPlay();
+               }
+               break;
+            case R.id.pause_resume_tgl:
+               if (isChecked) {
+                  pauseAutoPlay();
+               } else {
+                  resumeAutoPlay();
+               }
+               break;
+            case R.id.show_test_tgl:
+               mSlideShowPresentation.showTest(isChecked);
+               break;
+            case R.id.previous_image_btn:
+               decrementImageIndex();
+               showNextImage();
+               break;
+            case R.id.next_image_btn:
+               incrementImageIndex();
+               showNextImage();
+               break;
+            case R.id.loop_switch:
+               mLoop = isChecked;
+               break;
+            case R.id.auto_switch:
+               mAutoPlay = isChecked;
+               mPreviousImageBtn.setEnabled(!mAutoPlay);
+               mNextImageBtn.setEnabled(!mAutoPlay);
+            default:
+               return;
+         }
+
+         if (mBtRcManager.getState() == BtRcManager.State.CONNECTED) {
             RcMessage uiUpdateMsg = new RcMessage();
             uiUpdateMsg.TYPE = RcMessage.UI_UPDATE;
-            CompoundButton btn = (CompoundButton) v;
-            boolean isChecked = btn.isChecked();
-            int btnId = btn.getId();
-
-            switch (btnId) {
-               case R.id.start_stop_tgl:
-                  if (isChecked) {
-                     startAutoPlay();
-                  } else {
-                     stopAutoPlay();
-                  }
-                  break;
-               case R.id.pause_resume_tgl:
-                  if (isChecked) {
-                     pauseAutoPlay();
-                  } else {
-                     resumeAutoPlay();
-                  }
-                  break;
-               case R.id.show_test_tgl:
-                  if (isChecked) {
-                     mSlideShowPresentation.showTest();
-                  } else {
-                     mSlideShowPresentation.hide();
-                  }
-                  break;
-               case R.id.loop_switch:
-                  mLoop = isChecked;
-                  break;
-               default:
-                  return;
-            }
-
-            if (mBtRcManager.getState() == BtRcManager.State.CONNECTED) {
-               uiUpdateMsg.UI_STATE = getUiState();
-               mBtRcManager.sendMessage(uiUpdateMsg);
-            }
+            uiUpdateMsg.UI_STATE = getUiState();
+            mBtRcManager.sendMessage(uiUpdateMsg);
          }
       }
    };

@@ -62,11 +62,9 @@ public class SlideShowPresentation extends Presentation
    }
 
 
-   public void resetPresentation(final String frontImage, final String backImage)
+   public void resetPresentation(final String frontImage)
    {
       setFrontImage(frontImage);
-      setBackImage(backImage);
-      //mFlipper.setDisplayedChild(0);
       mFlipper.setInAnimation(getContext(), mAnimations[0][0]);
       mFlipper.setOutAnimation(getContext(), mAnimations[0][1]);
       mFlipper.getInAnimation().setAnimationListener(mAnimationListener);
@@ -91,22 +89,26 @@ public class SlideShowPresentation extends Presentation
       mFlipper.getInAnimation().setAnimationListener(null);
    }
 
-   public void showTest()
+   public void showTest(final boolean show)
    {
-      setFrontImage(R.drawable.testpic);
+      Log.d(LOG_TAG, "showTest:" + show);
+      if (show) {
+         setNextImage(R.drawable.testpic);
+      }
+      mFlipper.showNext();
       mFlipper.setVisibility(View.VISIBLE);
    }
 
-   public void hide()
+   public void hide(final boolean hide)
    {
-      mFlipper.setVisibility(View.INVISIBLE);
+      mFlipper.setVisibility(hide ? View.INVISIBLE : View.VISIBLE);
    }
 
    public void switchView(final String nextImageFile)
    {
       mShowNextImage = true;
+      mFlipper.setVisibility(View.VISIBLE);
       setNextImage(nextImageFile);
-      //mFlipper.showNext();
    }
 
    private void setup()
@@ -139,9 +141,18 @@ public class SlideShowPresentation extends Presentation
    }
 
 
+   public void setNextImage(final int imageResource)
+   {
+      setBackImage(imageResource);
+      mFlipper.setInAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][0]);
+      mFlipper.setOutAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][1]);
+      mFlipper.getInAnimation().setAnimationListener(mAnimationListener);
+      mCounter++;
+   }
+
    public void setNextImage(final String nextImage)
    {
-      setBackImage(nextImage == null ? mNextImageFile : nextImage);
+      setBackImage(nextImage);
       mFlipper.setInAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][0]);
       mFlipper.setOutAnimation(getContext(), mAnimations[mCounter % NUM_OF_ANIMATIONS][1]);
       mFlipper.getInAnimation().setAnimationListener(mAnimationListener);
@@ -207,7 +218,6 @@ public class SlideShowPresentation extends Presentation
                   }
                   long ts2 = System.currentTimeMillis();
                   Log.d(LOG_TAG, "ts diff: " + (ts2 - ts) + "ms");
-                  //mActivityHandler.sendEmptyMessage(SlideShowActivity.SET_IMAGE_DONE);
                }
             });
          }
