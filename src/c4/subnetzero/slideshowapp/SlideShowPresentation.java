@@ -77,16 +77,18 @@ public class SlideShowPresentation extends Presentation
             mFlipper.setVisibility(View.VISIBLE);
          }
       },1000);
-      
+
       mCounter = 1;
    }
 
 
    public void stopAutoPlay()
    {
-      mFlipper.setVisibility(View.INVISIBLE);
+      //mFlipper.setVisibility(View.INVISIBLE);
       mFlipper.clearAnimation();
-      mFlipper.getInAnimation().setAnimationListener(null);
+      if (mFlipper.getInAnimation() != null) {
+         mFlipper.getInAnimation().setAnimationListener(null);
+      }
    }
 
    public void showTest(final boolean show)
@@ -119,6 +121,7 @@ public class SlideShowPresentation extends Presentation
       mImageViewB = (ImageView) findViewById(R.id.image_b);
 
       mFlipper = (ViewFlipper) findViewById(R.id.flipper);
+      mFlipper.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 
       mAnimations = new int[NUM_OF_ANIMATIONS][2];
 
@@ -282,7 +285,7 @@ public class SlideShowPresentation extends Presentation
       @Override
       public void onAnimationEnd(Animation animation)
       {
-         mActivityHandler.sendEmptyMessage(SlideShowActivity.TRANSISION_FINISHED);
+         mActivityHandler.sendEmptyMessage(SlideShowActivity.TRANSITION_FINISHED);
       }
    };
 

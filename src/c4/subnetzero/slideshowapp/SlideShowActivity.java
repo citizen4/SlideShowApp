@@ -33,10 +33,9 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    private TextView mImageText;
    private TextView mIntervalText;
    private Switch mLoopSwitch;
-   private Switch mAutoSwitch;
    private SeekBar mIntervalSeek;
    private ProgressBar mImageProgressBar;
-   private ToggleButton mStartStopBtn;
+   private Button mStartStopBtn;
    private ToggleButton mPauseResumeBtn;
    private ToggleButton mShowTestBtn;
    private Button mPreviousImageBtn;
@@ -55,7 +54,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
 
 
    public static final int AUTOPLAY_SWITCH_VIEW = 0;
-   public static final int TRANSISION_FINISHED = 1;
+   public static final int TRANSITION_FINISHED = 1;
 
 
    @Override
@@ -77,8 +76,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       if (mSlideShowPresentation != null) {
          mSlideShowPresentation.show();
          reset();
-         mSlideShowPresentation.showTest(true);
-         mShowTestBtn.setChecked(true);
+         mShowTestBtn.performClick();
       }
 
       if (mBtRcManager != null && mBtRcManager.isBtEnabled()) {
@@ -93,7 +91,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       super.onPause();
 
       if (mIsPlaying) {
-         stopAutoPlay();
+         pauseAutoPlay();
       }
 
       if (mSlideShowPresentation != null) {
@@ -159,7 +157,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
             }
             showNextImage();
             break;
-         case TRANSISION_FINISHED:
+         case TRANSITION_FINISHED:
             mBusy = false;
             break;
          case BtRcManager.STATE_CHANGED:
@@ -189,64 +187,37 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    public void reset()
    {
       mUiHandler.removeCallbacksAndMessages(null);
+      mSlideShowPresentation.stopAutoPlay();
       mImageProgressBar.setProgress(1);
       mImageText.setText(String.format(getString(R.string.img_progress), 1, mNumberOfImages));
       mSlideShowPresentation.resetPresentation(mGalleryDirPath + "/" + mImageFileNames[0]);
       mShowTestBtn.setEnabled(true);
-      mNextImageIndex = 0;
-   }
-
-
-   public void startAutoPlay()
-   {
-      if (mIsPlaying) {
-         return;
-      }
-
-      Log.d(LOG_TAG, "Start auto play");
-      mAutoPlay = true;
-      reset();
-      mUiHandler.sendEmptyMessageDelayed(AUTOPLAY_SWITCH_VIEW, getInterval(mImageFileNames[0]));
-      mPauseResumeBtn.setEnabled(true);
       mShowTestBtn.setChecked(false);
-      mShowTestBtn.setEnabled(false);
+      mPauseResumeBtn.setEnabled(true);
+      mPauseResumeBtn.setChecked(true);
+      mNextImageIndex = 0;
       mDone = false;
-      mIsPlaying = true;
    }
 
    public void resumeAutoPlay()
    {
-      if (mIsPlaying) {
-         return;
-      }
-
+      mPreviousImageBtn.setEnabled(false);
+      mNextImageBtn.setEnabled(false);
+      mShowTestBtn.setChecked(false);
+      mShowTestBtn.setEnabled(false);
+      mStartStopBtn.setEnabled(false);
       mUiHandler.sendEmptyMessage(AUTOPLAY_SWITCH_VIEW);
       mIsPlaying = true;
    }
 
    public void pauseAutoPlay()
    {
-      if (!mIsPlaying) {
-         return;
-      }
-
-      mUiHandler.removeCallbacksAndMessages(null);
-      mIsPlaying = false;
-   }
-
-
-   public void stopAutoPlay()
-   {
-      Log.d(LOG_TAG, "Stop auto play");
-      mIsPlaying = false;
-      mAutoPlay = false;
-      mUiHandler.removeCallbacksAndMessages(null);
-      //mImageText.setVisibility(View.INVISIBLE);
-      //mImageProgressBar.setVisibility(View.INVISIBLE);
-      mSlideShowPresentation.stopAutoPlay();
-      mPauseResumeBtn.setChecked(false);
-      mPauseResumeBtn.setEnabled(false);
+      mStartStopBtn.setEnabled(true);
+      mPreviousImageBtn.setEnabled(true);
+      mNextImageBtn.setEnabled(true);
       mShowTestBtn.setEnabled(true);
+      mUiHandler.removeCallbacksAndMessages(null);
+      mIsPlaying = false;
    }
 
    public void showNextImage()
@@ -257,6 +228,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
 
       RcMessage uiUpdateMsg;
       mBusy = true;
+
       mSlideShowPresentation.switchView(mGalleryDirPath + "/" + mImageFileNames[mNextImageIndex]);
       mImageProgressBar.setProgress(mNextImageIndex + 1);
       uiUpdateMsg = new RcMessage();
@@ -292,10 +264,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       mLoopSwitch = (Switch) findViewById(R.id.loop_switch);
       mLoopSwitch.setOnClickListener(mOnClickListener);
 
-      mAutoSwitch = (Switch) findViewById(R.id.auto_switch);
-      mAutoSwitch.setOnClickListener(mOnClickListener);
-
-      mStartStopBtn = (ToggleButton) findViewById(R.id.start_stop_tgl);
+      mStartStopBtn = (Button) findViewById(R.id.start_stop_tgl);
       mStartStopBtn.setOnClickListener(mOnClickListener);
 
       mPauseResumeBtn = (ToggleButton) findViewById(R.id.pause_resume_tgl);
@@ -321,7 +290,7 @@ public class SlideShowActivity extends Activity implements Handler.Callback
          galleryDir = imgFile.getParent();
       } else {
          galleryDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath();
-         galleryDir += "/BDayTest";
+         galleryDir += "/BDay70";
       }
 
       imageFileNames = getImageFileNames(galleryDir);
@@ -379,6 +348,12 @@ public class SlideShowActivity extends Activity implements Handler.Callback
          case RcMessage.TEST_BTN:
             mShowTestBtn.performClick();
             break;
+         case RcMessage.PREVIOUS_IMAGE_BTN:
+            mPreviousImageBtn.performClick();
+            break;
+         case RcMessage.NEXT_IMAGE_BTN:
+            mNextImageBtn.performClick();
+            break;
          case RcMessage.LOOP_SWITCH:
             mLoopSwitch.performClick();
             break;
@@ -393,21 +368,24 @@ public class SlideShowActivity extends Activity implements Handler.Callback
    private int[] getUiState()
    {
       return new int[]{
-              RcMessage.START_BTN,
-              mStartStopBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
-              mStartStopBtn.isChecked() ? RcMessage.ON : RcMessage.OFF,
-              RcMessage.PAUSE_BTN,
-              mPauseResumeBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
-              mPauseResumeBtn.isChecked() ? RcMessage.ON : RcMessage.OFF,
-              RcMessage.TEST_BTN,
-              mShowTestBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
-              mShowTestBtn.isChecked() ? RcMessage.ON : RcMessage.OFF,
-              RcMessage.LOOP_SWITCH,
-              mLoopSwitch.isChecked() ? RcMessage.ON : RcMessage.OFF,
-              RcMessage.INTERVAL_SEEK, mIntervalSeek.getProgress(),
-              RcMessage.IMAGE_NUMBER, mImageProgressBar.getMax(),
-              RcMessage.IMAGE_PROGRESS, mImageProgressBar.getProgress(),
-              mImageProgressBar.getVisibility()
+            RcMessage.START_BTN,
+            mStartStopBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
+            RcMessage.PAUSE_BTN,
+            mPauseResumeBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
+            mPauseResumeBtn.isChecked() ? RcMessage.ON : RcMessage.OFF,
+            RcMessage.TEST_BTN,
+            mShowTestBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
+            mShowTestBtn.isChecked() ? RcMessage.ON : RcMessage.OFF,
+            RcMessage.PREVIOUS_IMAGE_BTN,
+            mPreviousImageBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
+            RcMessage.NEXT_IMAGE_BTN,
+            mNextImageBtn.isEnabled() ? RcMessage.ON : RcMessage.OFF,
+            RcMessage.LOOP_SWITCH,
+            mLoopSwitch.isChecked() ? RcMessage.ON : RcMessage.OFF,
+            RcMessage.INTERVAL_SEEK, mIntervalSeek.getProgress(),
+            RcMessage.IMAGE_NUMBER, mImageProgressBar.getMax(),
+            RcMessage.IMAGE_PROGRESS, mImageProgressBar.getProgress(),
+            mImageProgressBar.getVisibility()
       };
    }
 
@@ -447,22 +425,26 @@ public class SlideShowActivity extends Activity implements Handler.Callback
       {
          boolean isChecked = false;
 
+         if (mBusy) {
+            return;
+         }
+
          if (view instanceof CompoundButton) {
             isChecked = ((CompoundButton) view).isChecked();
          }
 
          switch (view.getId()) {
             case R.id.start_stop_tgl:
-               if (isChecked) {
-                  startAutoPlay();
-               } else {
-                  stopAutoPlay();
-               }
+               reset();
                break;
             case R.id.pause_resume_tgl:
                if (isChecked) {
                   pauseAutoPlay();
                } else {
+                  if (mShowTestBtn.isChecked()) {
+                     mShowTestBtn.performClick();
+                     return;
+                  }
                   resumeAutoPlay();
                }
                break;
@@ -470,20 +452,24 @@ public class SlideShowActivity extends Activity implements Handler.Callback
                mSlideShowPresentation.showTest(isChecked);
                break;
             case R.id.previous_image_btn:
+               if (mShowTestBtn.isChecked()) {
+                  mShowTestBtn.performClick();
+                  return;
+               }
                decrementImageIndex();
                showNextImage();
                break;
             case R.id.next_image_btn:
+               if (mShowTestBtn.isChecked()) {
+                  mShowTestBtn.performClick();
+                  return;
+               }
                incrementImageIndex();
                showNextImage();
                break;
             case R.id.loop_switch:
                mLoop = isChecked;
                break;
-            case R.id.auto_switch:
-               mAutoPlay = isChecked;
-               mPreviousImageBtn.setEnabled(!mAutoPlay);
-               mNextImageBtn.setEnabled(!mAutoPlay);
             default:
                return;
          }

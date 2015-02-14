@@ -81,7 +81,7 @@ public class BtRcManager
    public void sendMessage(final RcMessage message)
    {
       final Gson gson = new Gson();
-      //Log.d(LOG_TAG, "TX: " + gson.toJson(message));
+      Log.d(LOG_TAG, "TX: " + gson.toJson(message));
       sendString(gson.toJson(message));
    }
 

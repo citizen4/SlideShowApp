@@ -79,15 +79,14 @@
                       android:gravity="center"
                 >
 
-            <ToggleButton android:id="@+id/start_stop_tgl"
+            <Button android:id="@+id/start_stop_tgl"
                           android:layout_width="160dp"
                           android:layout_height="wrap_content"
                           android:layout_margin="5dp"
-                          android:paddingTop="20dp"
-                          android:paddingBottom="20dp"
-                          android:textSize="36sp"
-                          android:textOff="Start"
-                          android:textOn="Stop"
+                          android:paddingTop="10dp"
+                          android:paddingBottom="10dp"
+                          android:textSize="50sp"
+                          android:text="| &lt;&lt;"
                     />
 
             <ToggleButton android:id="@+id/pause_resume_tgl"
@@ -144,14 +143,7 @@
                 android:textSize="20sp"
                 android:text="Loop:"
                 />
-            <Switch android:id="@+id/auto_switch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:layout_marginTop="10dp"
-                    android:textSize="20sp"
-                    android:text="Auto Play:"
-                    />
+
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
